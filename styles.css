@@ -1,4 +1,4 @@
-/* Reset e configurações básicas */
+
 * {
   margin: 0;
   padding: 0;
@@ -16,14 +16,11 @@ body {
   background-color: #ffffff;
 }
 
-/* Container padrão */
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
 }
-
-/* Header e Navegação */
 .header {
   position: fixed;
   top: 0;
@@ -96,8 +93,6 @@ body {
 .nav-link.active::after {
   width: 100%;
 }
-
-/* Menu mobile */
 .nav-toggle {
   display: none;
   flex-direction: column;
@@ -112,7 +107,6 @@ body {
   transition: 0.3s;
 }
 
-/* Hero Section */
 .hero {
   min-height: 100vh;
   display: flex;
@@ -211,6 +205,15 @@ body {
   border: 2px solid #2563eb;
 }
 
+.btn-secondary i {
+  margin-right: 0.5rem;
+}
+
+.btn-primary i,
+.btn-secondary i {
+  font-size: 1rem;
+}
+
 .btn-secondary:hover {
   background: #2563eb;
   color: white;
@@ -233,7 +236,6 @@ body {
   width: 100%;
 }
 
-/* Imagem do hero */
 .hero-image {
   display: flex;
   justify-content: center;
@@ -282,7 +284,6 @@ body {
   }
 }
 
-/* Indicador de scroll */
 .scroll-indicator {
   position: absolute;
   bottom: 30px;
@@ -316,7 +317,6 @@ body {
   }
 }
 
-/* Seções gerais */
 section {
   padding: 100px 0;
 }
@@ -353,7 +353,6 @@ section {
   margin: 0 auto;
 }
 
-/* About Section */
 .about {
   background: #f8fafc;
 }
@@ -410,7 +409,6 @@ section {
   margin-top: 2rem;
 }
 
-/* Skills */
 .skills-title {
   font-size: 1.5rem;
   font-weight: 600;
@@ -464,7 +462,6 @@ section {
   transition: width 1.5s ease;
 }
 
-/* Projects Section */
 .projects-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -574,8 +571,6 @@ section {
   font-size: 0.8rem;
   font-weight: 500;
 }
-
-/* Contact Section */
 .contact {
   background: #f8fafc;
 }
@@ -653,7 +648,14 @@ section {
   transform: translateY(-3px);
 }
 
-/* Contact Form */
+.social-link[title="WhatsApp"]:hover {
+  background: #25d366;
+}
+
+.social-link[title="GitHub"]:hover {
+  background: #333;
+}
+
 .contact-form {
   background: white;
   padding: 2.5rem;
@@ -706,7 +708,6 @@ section {
   display: inline-block;
 }
 
-/* Footer */
 .footer {
   background: #1e293b;
   color: white;
@@ -734,7 +735,6 @@ section {
   color: white;
 }
 
-/* Back to Top Button */
 .back-to-top {
   position: fixed;
   bottom: 30px;
@@ -765,9 +765,7 @@ section {
   transform: translateY(-3px);
 }
 
-/* Responsive Design */
 @media (max-width: 768px) {
-  /* Navigation mobile */
   .nav-menu {
     position: fixed;
     left: -100%;
@@ -801,7 +799,6 @@ section {
     transform: translateY(-8px) rotate(-45deg);
   }
 
-  /* Hero responsive */
   .hero-content {
     grid-template-columns: 1fr;
     gap: 2rem;
@@ -822,7 +819,6 @@ section {
     height: 280px;
   }
 
-  /* About responsive */
   .about-content {
     grid-template-columns: 1fr;
     gap: 2rem;
@@ -833,13 +829,11 @@ section {
     gap: 1rem;
   }
 
-  /* Contact responsive */
   .contact-content {
     grid-template-columns: 1fr;
     gap: 2rem;
   }
 
-  /* Footer responsive */
   .footer-content {
     flex-direction: column;
     gap: 1rem;
@@ -850,12 +844,10 @@ section {
     justify-content: center;
   }
 
-  /* Projects responsive */
   .projects-grid {
     grid-template-columns: 1fr;
   }
 
-  /* Seções padding */
   section {
     padding: 60px 0;
   }
@@ -894,7 +886,6 @@ section {
   }
 }
 
-/* Animações de entrada */
 .fade-in {
   opacity: 0;
   transform: translateY(30px);
