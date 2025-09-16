@@ -1,4 +1,4 @@
-// Navegação suave e menu mobile
+//*// Navegação suave e menu mobile
 document.addEventListener("DOMContentLoaded", () => {
   // Elementos do DOM
   const navToggle = document.querySelector(".nav-toggle")
@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const backToTop = document.getElementById("backToTop")
   const contactForm = document.getElementById("contactForm")
   const downloadCV = document.getElementById("downloadCV")
+  const emailjs = window.emailjs // Declare the emailjs variable
 
   // Toggle do menu mobile
   navToggle.addEventListener("click", () => {
@@ -144,36 +145,42 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault()
 
     const btn = this.querySelector('button[type="submit"]')
-    const formData = new FormData(this)
 
-    // Simular envio (adicionar loading)
+    // Initialize EmailJS with your public key
+    emailjs.init("YOUR_PUBLIC_KEY") // You'll need to replace this with your actual EmailJS public key
+
+    // Show loading state
     btn.classList.add("loading")
     btn.disabled = true
 
-    // Simular delay de envio
-    setTimeout(() => {
-      // Aqui você adicionaria a lógica real de envio
-      console.log("Formulário enviado:", Object.fromEntries(formData))
-
-      // Mostrar mensagem de sucesso
-      showNotification("Mensagem enviada com sucesso!", "success")
-
-      // Reset do formulário
-      this.reset()
-      btn.classList.remove("loading")
-      btn.disabled = false
-    }, 2000)
+    // Send email using EmailJS - configured to send to cvdinizramos@gmail.com
+    emailjs
+      .sendForm("YOUR_SERVICE_ID", "YOUR_TEMPLATE_ID", this)
+      .then(
+        (response) => {
+          console.log("SUCCESS!", response.status, response.text)
+          showNotification("Mensagem enviada com sucesso para cvdinizramos@gmail.com!", "success")
+          contactForm.reset()
+        },
+        (error) => {
+          console.log("FAILED...", error)
+          showNotification("Erro ao enviar mensagem. Tente novamente.", "error")
+        },
+      )
+      .finally(() => {
+        btn.classList.remove("loading")
+        btn.disabled = false
+      })
   })
 
   // Download do currículo
   downloadCV.addEventListener("click", (e) => {
     e.preventDefault()
 
-    // Simular download (você pode substituir por um link real)
-    showNotification("Download do currículo iniciado!", "info")
+    const resumeUrl = "https://docs.google.com/document/d/1_3CIDasNcO2HzBqKouM5YM72md6QwJckOqqopUGbICg/edit?usp=sharing"
+    window.open(resumeUrl, "_blank")
 
-    // Aqui você adicionaria a lógica real de download
-    // window.open('path/to/cv.pdf', '_blank');
+    showNotification("Abrindo currículo em nova aba!", "info")
   })
 
   // Sistema de notificações
@@ -187,7 +194,6 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
         `
 
-    // Adicionar estilos se não existirem
     if (!document.querySelector("#notification-styles")) {
       const styles = document.createElement("style")
       styles.id = "notification-styles"
@@ -218,6 +224,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 .notification-info {
                     border-left: 4px solid #2563eb;
+                }
+                .notification-error {
+                    border-left: 4px solid #ef4444;
                 }
                 .notification-close {
                     background: none;
