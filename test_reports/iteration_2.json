@@ -1,0 +1,30 @@
+{
+  "summary": "Verified NEW features only (AI insights, Profile, Budgets, Recurring tx, enhanced Landing). 17/17 new pytest cases pass (incl. real Claude Sonnet 4.5 call). Frontend Playwright covered: landing hero+stats(4.230/128.000+/98%/25+)+pricing R$0 render; sidebar has nav-budgets & nav-profile; /app/budgets shows 3 seeded cards with correct color bands (Alimentação 93% amber, Lazer 27% green, Transporte 50% green), new-budget modal creates 4th card; /app/profile renders all 6 data-testids with current name 'Usuário Demo'; Dashboard ai-insights-btn triggers POST /api/insights/ai and renders ai-insights-panel with 6 color-coded insight cards (success/warning/info); Transactions modal exposes tx-recurring checkbox that reveals tx-recurring-frequency select; recurring tx list row shows purple 'monthly' chip with icon.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Landing (/)", "issues": ["Missing data-testid on feature cards, testimonials, preview showcase and top progress bar — visual rendering is correct, but reduces automation testability (feature-card-*, testimonial-*, preview-*, top-progress not found)."]},
+      {"screen": "global", "issues": ["React Router v6 future flag warnings (v7_startTransition, v7_relativeSplatPath) — cosmetic (carried over from iter 1)"]}
+    ]
+  },
+  "test_report_links": ["/app/backend/tests/test_new_features.py", "/app/test_reports/pytest/new_features_results.xml"],
+  "action_items": [
+    "(Optional / low priority) Add data-testid attributes to Landing sub-sections (feature-card-*, testimonial-*, preview-*, top-progress) to match spec for downstream regression coverage."
+  ],
+  "critical_code_review_comments": [
+    "server.py still uses deprecated @app.on_event('startup') — migrate to lifespan context manager.",
+    "/api/insights/ai catches all exceptions and returns 503 with generic message — consider logging traceback with logger.exception and distinguishing quota/rate-limit vs parse errors.",
+    "Budget category is a fixed <select> on the frontend — user cannot define custom categories; if that's product intent it's fine, otherwise consider a combobox.",
+    "CORS_ORIGINS='*' with allow_credentials=True still present (starlette warning); tighten for production."
+  ],
+  "updated_files": ["/app/backend/tests/test_new_features.py"],
+  "success_rate": {"backend": "100% (17/17 new + 15/15 iter1 still green)", "frontend": "100% on tested flows"},
+  "test_credentials": "admin@finix.com/Admin@123 (ADMIN); demo@finix.com/Demo@123 (USER). Demo name now 'Usuário Demo' (accented).",
+  "seed_data_creation": "Used seeded demo user. Created a handful of TEST_* budgets & transactions via fresh registered users scoped to each test; nothing polluting demo data except 1 UI-created 'Moradia' budget for demo (can be deleted by main agent if desired).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Run `REACT_APP_BACKEND_URL=<url> pytest /app/backend/tests/test_new_features.py -v`. AI endpoint takes 3-15s so use timeout>=60s. Dashboard btn: ai-insights-btn → ai-insights-panel. Budgets page testids: budgets-page, new-budget-btn, budget-modal, budget-category (SELECT not input — use select_option), budget-limit, budget-save, budget-card-{id}. Profile: profile-page, profile-name, save-name, current-password, new-password, change-password. Transactions modal opens via new-transaction-btn; tx-recurring checkbox reveals tx-recurring-frequency. Iteration 1 file /app/backend/tests/backend_test.py is still valid regression suite.",
+  "rca of the issue": "N/A — no blocking issues found."
+}

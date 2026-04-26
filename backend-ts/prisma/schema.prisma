@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   String   @id @default(uuid())
+  name                 String
+  email                String   @unique
+  passwordHash         String
+  role                 String   @default("USER")
+  blocked              Boolean  @default(false)
+  photo                String?
+  plan                 String   @default("FREE") // FREE | BASIC | PRO
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  transactionsUsed     Int      @default(0)
+  transactionsMonth    String   @default("") // YYYY-MM for monthly reset
+  planExpiresAt        DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @default(now()) @updatedAt
+
+  transactions         Transaction[]
+  goals                Goal[]
+  budgets              Budget[]
+  paymentTransactions  PaymentTransaction[]
+
+  @@map("users")
+}
+
+model Transaction {
+  id                 String   @id @default(uuid())
+  userId             String
+  title              String
+  amount             Float
+  type               String
+  category           String
+  description        String?
+  date               DateTime
+  recurring          Boolean  @default(false)
+  recurringFrequency String?
+  paymentMethod      String?  @default("pix")
+  installments       Int      @default(1)
+  installmentNumber  Int?
+  totalInstallments  Int?
+  totalAmount        Float?
+  currency           String   @default("BRL")
+  createdAt          DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("transactions")
+}
+
+model Goal {
+  id            String   @id @default(uuid())
+  userId        String
+  title         String
+  targetAmount  Float
+  currentAmount Float    @default(0)
+  deadline      DateTime
+  createdAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("goals")
+}
+
+model Budget {
+  id        String   @id @default(uuid())
+  userId    String
+  category  String
+  limit     Float
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, category])
+  @@map("budgets")
+}
+
+model PaymentTransaction {
+  id              String   @id @default(uuid())
+  userId          String?
+  userEmail       String?
+  sessionId       String   @unique
+  amount          Float
+  currency        String   @default("brl")
+  plan            String   // basic | pro
+  paymentStatus   String   @default("pending") // pending | paid | failed | expired
+  status          String   @default("initiated")
+  stripePaymentId String?
+  metadata        String?  // JSON string
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @default(now()) @updatedAt
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("payment_transactions")
+}

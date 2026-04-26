@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body, #root { height: 100%; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    background: #F8FAFC;
+    color: #0F172A;
+  }
+  .dark body { background: #0B1220; color: #E2E8F0; }
+  h1, h2, h3, h4 { font-family: 'Poppins', 'Inter', sans-serif; letter-spacing: -0.02em; }
+  ::selection { background: #2563EB; color: white; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-white
+           bg-gradient-to-r from-brand-blue to-brand-purple shadow-glow
+           hover:brightness-110 active:scale-[0.98] transition-all duration-200;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-medium
+           text-slate-700 hover:bg-slate-100 transition-colors;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl font-medium
+           border border-slate-200 bg-white text-slate-700 hover:border-brand-blue hover:text-brand-blue
+           transition-colors;
+  }
+  .card {
+    @apply bg-white rounded-2xl border border-slate-100 shadow-soft p-6;
+  }
+  .dark .card { @apply bg-slate-900 border-slate-800; }
+  .input {
+    @apply w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white
+           focus:outline-none focus:ring-2 focus:ring-brand-blue/30 focus:border-brand-blue
+           placeholder:text-slate-400 transition-all;
+  }
+  .dark .input { @apply bg-slate-900 border-slate-700 text-slate-100; }
+  .chip {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold;
+  }
+  .skeleton {
+    @apply animate-pulse bg-slate-200 rounded-lg;
+  }
+  .dark .skeleton { @apply bg-slate-800; }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+.dark ::-webkit-scrollbar-thumb { background: #334155; }
+
+/* Gradient background helper */
+.bg-auth-side {
+  background:
+    radial-gradient(ellipse at top left, rgba(124, 58, 237, 0.35), transparent 60%),
+    radial-gradient(ellipse at bottom right, rgba(34, 197, 94, 0.25), transparent 50%),
+    linear-gradient(135deg, #0F172A 0%, #1E1B4B 100%);
+}

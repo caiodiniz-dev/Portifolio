@@ -1,0 +1,4 @@
+{
+  "prisma.pinToPrisma6": true,
+  "git.ignoreLimitWarning": true
+}
