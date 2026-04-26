@@ -30,8 +30,9 @@
   "scripts": {
     "dev": "npx react-scripts start",
     "start": "npx react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test"
+    "Build": "react-scripts build",
+    "test": "react-scripts test",
+    "build": "vite build"
   },
   "eslintConfig": {
     "extends": [
