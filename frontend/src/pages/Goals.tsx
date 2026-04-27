@@ -34,14 +34,14 @@ export default function Goals() {
   const [editing, setEditing] = useState<Goal | null>(null);
 
   const fetchData = async () => {
-    const r = await api.get('/goals');
+    const r = await api.get('/api/goals');
     setItems(r.data);
   };
   useEffect(() => { fetchData().catch(() => toast.error('Erro ao carregar')); }, []);
 
   const onDelete = async (g: Goal) => {
     if (!window.confirm(`Excluir meta "${g.title}"?`)) return;
-    try { await api.delete(`/goals/${g.id}`); toast.success('Excluída'); fetchData(); }
+    try { await api.delete(`/api/goals/${g.id}`); toast.success('Excluída'); fetchData(); }
     catch (e) { toast.error(apiErrorMessage(e)); }
   };
 
@@ -59,7 +59,7 @@ export default function Goals() {
 
       {items === null ? (
         <div className="grid sm:grid-cols-2 gap-4">
-          {[1,2,3].map(i => <div key={i} className="skeleton h-40" />)}
+          {[1, 2, 3].map(i => <div key={i} className="skeleton h-40" />)}
         </div>
       ) : items.length === 0 ? (
         <div className="card text-center py-14">
@@ -146,8 +146,8 @@ function GoalModal({ editing, onClose, onSaved }: { editing: Goal | null; onClos
   const onSubmit = async (data: Form) => {
     try {
       const payload = { ...data, deadline: new Date(data.deadline).toISOString() };
-      if (editing) await api.put(`/goals/${editing.id}`, payload);
-      else await api.post('/goals', payload);
+      if (editing) await api.put(`/api/goals/${editing.id}`, payload);
+      else await api.post('/api/goals', payload);
       toast.success(editing ? 'Atualizada' : 'Criada');
       onSaved();
     } catch (e) { toast.error(apiErrorMessage(e)); }

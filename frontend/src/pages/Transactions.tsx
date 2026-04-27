@@ -35,14 +35,14 @@ export default function Transactions() {
   const [category, setCategory] = useState('');
   const [budgets, setBudgets] = useState<Budget[]>([]);
 
-  const fetchBudgets = async () => setBudgets((await api.get('/budgets')).data);
+  const fetchBudgets = async () => setBudgets((await api.get('/api/budgets')).data);
 
   const fetchData = useCallback(async () => {
     const params: any = {};
     if (q) params.search = q;
     if (type) params.type = type;
     if (category) params.category = category;
-    const r = await api.get('/transactions', { params });
+    const r = await api.get('/api/transactions', { params });
     setItems(r.data);
   }, [q, type, category]);
 
@@ -53,7 +53,7 @@ export default function Transactions() {
 
   const onDelete = async (t: Transaction) => {
     if (!window.confirm(`Excluir "${t.title}"?`)) return;
-    try { await api.delete(`/transactions/${t.id}`); toast.success('Excluído'); fetchData(); }
+    try { await api.delete(`/api/transactions/${t.id}`); toast.success('Excluído'); fetchData(); }
     catch (e) { toast.error(apiErrorMessage(e)); }
   };
 
@@ -223,8 +223,8 @@ function TxModal({ editing, onClose, onSaved, budgets }: { editing: Transaction 
         }
       }
 
-      if (editing) await api.put(`/transactions/${editing.id}`, payload);
-      else await api.post('/transactions', payload);
+      if (editing) await api.put(`/api/transactions/${editing.id}`, payload);
+      else await api.post('/api/transactions', payload);
       toast.success(editing ? 'Atualizado' : 'Criado');
       onSaved();
     } catch (e) { toast.error(apiErrorMessage(e)); }

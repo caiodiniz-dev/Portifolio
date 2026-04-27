@@ -27,7 +27,7 @@ export default function Dashboard() {
     setError(null);
     setLoading(true);
     try {
-      const r = await api.get('/dashboard');
+      const r = await api.get('/api/dashboard');
       setData(r.data);
     } catch (e: any) {
       const message = apiErrorMessage(e) || 'Erro ao carregar dashboard';
@@ -50,7 +50,7 @@ export default function Dashboard() {
 
   const handleExport = async (kind: 'pdf' | 'excel') => {
     try {
-      const r = await api.get(`/export/${kind}`, { responseType: 'blob' });
+      const r = await api.get(`/api/export/${kind}`, { responseType: 'blob' });
       const url = URL.createObjectURL(r.data);
       const a = document.createElement('a');
       a.href = url;
@@ -64,7 +64,7 @@ export default function Dashboard() {
   const generateAi = async () => {
     setAiLoading(true);
     try {
-      const r = await api.post('/insights/ai');
+      const r = await api.post('/api/insights/ai');
       setAiInsights(r.data.insights || []);
       toast.success('Análise da IA pronta!');
     } catch (e: any) {

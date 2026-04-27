@@ -17,7 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem('finix_token') || sessionStorage.getItem('finix_token');
     if (!token) { setUser(null); return; }
-    api.get('/auth/me').then((r) => setUser(r.data)).catch(() => {
+    api.get('/api/auth/me').then((r) => setUser(r.data)).catch(() => {
       localStorage.removeItem('finix_token');
       sessionStorage.removeItem('finix_token');
       setUser(null);

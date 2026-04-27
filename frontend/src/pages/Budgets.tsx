@@ -20,12 +20,12 @@ export default function Budgets() {
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Budget | null>(null);
 
-  const fetchData = async () => setItems((await api.get('/budgets')).data);
+  const fetchData = async () => setItems((await api.get('/api/budgets')).data);
   useEffect(() => { fetchData().catch(() => toast.error('Erro')); }, []);
 
   const onDelete = async (b: Budget) => {
     if (!window.confirm(`Excluir orçamento de ${b.category}?`)) return;
-    try { await api.delete(`/budgets/${b.id}`); toast.success('Excluído'); fetchData(); }
+    try { await api.delete(`/api/budgets/${b.id}`); toast.success('Excluído'); fetchData(); }
     catch (e) { toast.error(apiErrorMessage(e)); }
   };
 
@@ -42,7 +42,7 @@ export default function Budgets() {
       </div>
 
       {items === null ? (
-        <div className="grid sm:grid-cols-2 gap-4">{[1,2,3].map(i => <div key={i} className="skeleton h-32" />)}</div>
+        <div className="grid sm:grid-cols-2 gap-4">{[1, 2, 3].map(i => <div key={i} className="skeleton h-32" />)}</div>
       ) : items.length === 0 ? (
         <div className="card text-center py-14">
           <Wallet className="w-12 h-12 mx-auto text-slate-300" />
@@ -127,8 +127,8 @@ function BudgetModal({ editing, onClose, onSaved }: { editing: Budget | null; on
   });
   const onSubmit = async (data: Form) => {
     try {
-      if (editing) await api.put(`/budgets/${editing.id}`, data);
-      else await api.post('/budgets', data);
+      if (editing) await api.put(`/api/budgets/${editing.id}`, data);
+      else await api.post('/api/budgets', data);
       toast.success(editing ? 'Atualizado' : 'Criado');
       onSaved();
     } catch (e) { toast.error(apiErrorMessage(e)); }

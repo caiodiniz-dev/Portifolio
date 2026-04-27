@@ -34,7 +34,7 @@ export default function Profile() {
 
   const onSaveName = async (data: { name: string }) => {
     try {
-      await api.put('/profile', { name: data.name });
+      await api.put('/api/profile', { name: data.name });
       toast.success('Nome atualizado! Recarregando...');
       setTimeout(() => window.location.reload(), 800);
     } catch (e) { toast.error(apiErrorMessage(e)); }
@@ -42,7 +42,7 @@ export default function Profile() {
 
   const onChangePw = async (data: { currentPassword: string; newPassword: string }) => {
     try {
-      await api.put('/profile', data);
+      await api.put('/api/profile', data);
       toast.success('Senha alterada!');
       pwForm.reset();
     } catch (e) { toast.error(apiErrorMessage(e)); }
@@ -79,7 +79,7 @@ export default function Profile() {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const base64 = e.target?.result as string;
-        await api.put('/profile', { photo: base64 });
+        await api.put('/api/profile', { photo: base64 });
         toast.success('Foto atualizada! Recarregando...');
         setTimeout(() => window.location.reload(), 800);
       };

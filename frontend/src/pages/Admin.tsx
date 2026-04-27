@@ -20,8 +20,8 @@ export default function Admin() {
 
   const loadAll = async () => {
     const [s, u] = await Promise.all([
-      api.get('/admin/stats'),
-      api.get('/users', { params: q ? { search: q } : {} }),
+      api.get('/api/admin/stats'),
+      api.get('/api/users', { params: q ? { search: q } : {} }),
     ]);
     setStats(s.data); setUsers(u.data);
   };
@@ -29,7 +29,7 @@ export default function Admin() {
 
   const toggleBlock = async (u: User) => {
     try {
-      await api.put(`/users/${u.id}`, { blocked: !u.blocked });
+      await api.put(`/api/users/${u.id}`, { blocked: !u.blocked });
       toast.success(!u.blocked ? 'Usuário bloqueado' : 'Usuário desbloqueado');
       loadAll();
     } catch (e) { toast.error(apiErrorMessage(e)); }
@@ -38,7 +38,7 @@ export default function Admin() {
   const toggleRole = async (u: User) => {
     const newRole = u.role === 'ADMIN' ? 'USER' : 'ADMIN';
     try {
-      await api.put(`/users/${u.id}`, { role: newRole });
+      await api.put(`/api/users/${u.id}`, { role: newRole });
       toast.success(`Permissão alterada para ${newRole}`);
       loadAll();
     } catch (e) { toast.error(apiErrorMessage(e)); }
@@ -46,7 +46,7 @@ export default function Admin() {
 
   const onDelete = async (u: User) => {
     if (!window.confirm(`Excluir usuário ${u.email}?`)) return;
-    try { await api.delete(`/users/${u.id}`); toast.success('Excluído'); loadAll(); }
+    try { await api.delete(`/api/users/${u.id}`); toast.success('Excluído'); loadAll(); }
     catch (e) { toast.error(apiErrorMessage(e)); }
   };
 
@@ -178,7 +178,7 @@ function UserDetail({ userId, onClose }: { userId: string; onClose: () => void }
   const [selectedPlan, setSelectedPlan] = useState<'FREE' | 'BASIC' | 'PRO' | null>(null);
 
   useEffect(() => {
-    api.get(`/users/${userId}`).then((r) => {
+    api.get(`/api/users/${userId}`).then((r) => {
       setData(r.data);
       setSelectedPlan(r.data.user.plan || 'FREE');
     });
@@ -187,7 +187,7 @@ function UserDetail({ userId, onClose }: { userId: string; onClose: () => void }
   const savePlan = async () => {
     if (!selectedPlan || !data) return;
     try {
-      await api.put(`/users/${userId}`, { plan: selectedPlan });
+      await api.put(`/api/users/${userId}`, { plan: selectedPlan });
       toast.success('Plano alterado com sucesso');
       setData({ ...data, user: { ...data.user, plan: selectedPlan } });
       setEditingPlan(false);
@@ -272,8 +272,8 @@ function UserDetail({ userId, onClose }: { userId: string; onClose: () => void }
                         key={plan}
                         onClick={() => setSelectedPlan(plan)}
                         className={`p-4 rounded-xl border-2 transition-all ${selectedPlan === plan
-                            ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
-                            : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
+                          ? 'border-purple-500 bg-purple-50 dark:bg-purple-900/20'
+                          : 'border-slate-200 dark:border-slate-700 hover:border-slate-300'
                           }`}
                       >
                         <div className={`inline-block px-3 py-1 rounded-full text-sm font-semibold text-white bg-gradient-to-r ${planColors[plan]} mb-2`}>
