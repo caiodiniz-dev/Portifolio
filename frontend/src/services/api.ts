@@ -1,13 +1,7 @@
 import axios from 'axios';
 
-const BACKEND = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8000';
-
-if (!process.env.REACT_APP_BACKEND_URL) {
-  console.warn('REACT_APP_BACKEND_URL não está configurado. Usando http://localhost:8000 como fallback.');
-}
-
 export const api = axios.create({
-  baseURL: `${BACKEND}/api`,
+  baseURL: import.meta.env.VITE_API_URL,
   headers: { 'Content-Type': 'application/json' },
 });
 
