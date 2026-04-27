@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import Goals from './pages/Goals';
@@ -23,6 +24,24 @@ function FullScreenLoader() {
       <div className="w-10 h-10 border-4 border-brand-blue/30 border-t-brand-blue rounded-full animate-spin" />
     </div>
   );
+}
+
+function OnboardingRequired({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (user === undefined) return <FullScreenLoader />;
+  if (user === null) return <Navigate to="/login" replace />;
+  if (user.role !== 'ADMIN' && user.plan === 'PRO' && !user.hasCompletedOnboarding) return <Navigate to="/onboarding" replace />;
+  return <>{children}</>;
+}
+
+function NeedsOnboarding({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (user === undefined) return <FullScreenLoader />;
+  if (user === null) return <Navigate to="/login" replace />;
+  if (user.role === 'ADMIN') return <Navigate to="/app/dashboard" replace />;
+  if (user.plan !== 'PRO') return <Navigate to="/app/dashboard" replace />;
+  if (user.hasCompletedOnboarding) return <Navigate to="/app/dashboard" replace />;
+  return <>{children}</>;
 }
 
 function ProtectedRoute({ children, admin = false }: { children: React.ReactNode; admin?: boolean }) {
@@ -59,7 +78,8 @@ export default function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<PublicOnly><Login /></PublicOnly>} />
           <Route path="/register" element={<PublicOnly><Register /></PublicOnly>} />
-          <Route path="/app" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
+          <Route path="/onboarding" element={<NeedsOnboarding><Onboarding /></NeedsOnboarding>} />
+          <Route path="/app" element={<OnboardingRequired><AppLayout /></OnboardingRequired>}>
             <Route index element={<Navigate to="/app/dashboard" replace />} />
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="transactions" element={<Transactions />} />

@@ -24,9 +24,13 @@ export default function Register() {
 
   const onSubmit = async (data: Form) => {
     try {
-      await signup(data.name, data.email, data.password);
+      const user = await signup(data.name, data.email, data.password);
       toast.success('Conta criada! Bem-vindo ao Finix 🚀');
-      nav('/app/dashboard');
+      if (user.plan === 'PRO') {
+        nav('/onboarding');
+      } else {
+        nav('/app/dashboard');
+      }
     } catch (e: any) {
       toast.error(e.message || 'Falha ao cadastrar');
     }

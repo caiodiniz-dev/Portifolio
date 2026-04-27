@@ -5,8 +5,10 @@ import { User } from '../types';
 interface AuthCtx {
   user: User | null | undefined; // undefined = loading, null = not logged in
   login: (email: string, password: string, remember?: boolean) => Promise<void>;
-  register: (name: string, email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<User>;
+  setUser: React.Dispatch<React.SetStateAction<User | null | undefined>>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const Ctx = createContext<AuthCtx | null>(null);
@@ -33,11 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (e) { throw new Error(apiErrorMessage(e)); }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, password: string): Promise<User> => {
     try {
       const { data } = await api.post('/api/auth/register', { name, email, password });
       localStorage.setItem('finix_token', data.token);
       setUser(data.user);
+      return data.user;
     } catch (e) { throw new Error(apiErrorMessage(e)); }
   };
 
@@ -48,7 +51,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.location.href = '/';
   };
 
-  return <Ctx.Provider value={{ user, login, register, logout }}>{children}</Ctx.Provider>;
+  const refreshUser = async () => {
+    const token = localStorage.getItem('finix_token') || sessionStorage.getItem('finix_token');
+    if (!token) return;
+    try {
+      const r = await api.get('/api/auth/me');
+      setUser(r.data);
+    } catch (e) {
+      console.error('Failed to refresh user:', e);
+    }
+  };
+
+  return <Ctx.Provider value={{ user, login, register, setUser, logout, refreshUser }}>{children}</Ctx.Provider>;
 }
 
 export const useAuth = () => {
@@ -56,3 +70,19 @@ export const useAuth = () => {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 };
+
+export function useAutoRefreshUser(intervalMs = 30000) {
+  const { refreshUser } = useAuth();
+
+  useEffect(() => {
+    const interval = setInterval(refreshUser, intervalMs);
+
+    const handleFocus = () => refreshUser();
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [refreshUser, intervalMs]);
+}

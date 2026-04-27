@@ -11,6 +11,12 @@ export interface User {
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   planExpiresAt?: string | null;
+  hasCompletedOnboarding?: boolean;
+  usageType?: string;
+  companyName?: string;
+  companyLogo?: string;
+  businessPurpose?: string;
+  primaryColor?: string;
 }
 
 export interface Transaction {
@@ -40,6 +46,13 @@ export interface Goal {
   targetAmount: number;
   currentAmount: number;
   deadline: string;
+  createdAt: string;
+}
+
+export interface Category {
+  id: string;
+  userId: string;
+  name: string;
   createdAt: string;
 }
 

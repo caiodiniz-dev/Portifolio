@@ -3,13 +3,14 @@ import { Users, Search, Shield, Ban, Unlock, Trash2, Eye, X, TrendingUp, Target,
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { api, apiErrorMessage } from '../services/api';
-import { User, Transaction, Goal } from '../types';
+import { User, Transaction, Goal, Category } from '../types';
 import { currency, dateBR } from '../utils/format';
 
 interface AdminStats {
   totalUsers: number; totalAdmins: number; blockedUsers: number;
   totalTransactions: number; totalGoals: number;
   globalIncome: number; globalExpense: number;
+  freeUsers: number; basicUsers: number; proUsers: number; totalRevenue: number;
 }
 
 export default function Admin() {
@@ -93,6 +94,26 @@ export default function Admin() {
           </div>
         </div>
       )}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Free', value: stats.freeUsers, icon: Users, color: 'from-slate-500 to-slate-700' },
+            { label: 'Basic', value: stats.basicUsers, icon: Zap, color: 'from-blue-500 to-blue-600' },
+            { label: 'Pro', value: stats.proUsers, icon: Shield, color: 'from-purple-500 to-pink-500' },
+            { label: 'Receita', value: currency(stats.totalRevenue), icon: TrendingUp, color: 'from-emerald-500 to-green-500' },
+          ].map((s, i) => (
+            <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+              className="card relative overflow-hidden">
+              <div className={`absolute -top-4 -right-4 w-20 h-20 rounded-full bg-gradient-to-br ${s.color} opacity-10 blur-xl`} />
+              <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center text-white mb-3`}>
+                <s.icon className="w-5 h-5" />
+              </div>
+              <div className="text-xs text-slate-500 uppercase tracking-wider font-semibold">{s.label}</div>
+              <div className="text-2xl font-display font-bold mt-1">{s.value}</div>
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       {/* Search */}
       <div className="card !p-4">
@@ -105,7 +126,7 @@ export default function Admin() {
       {/* Users table */}
       <div className="card !p-0 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="min-w-[900px] w-full text-sm whitespace-nowrap">
             <thead className="bg-slate-50 dark:bg-slate-800/50 text-left text-slate-600 dark:text-slate-300">
               <tr>
                 <th className="px-5 py-3 font-semibold">Usuário</th>
@@ -173,15 +194,36 @@ export default function Admin() {
 }
 
 function UserDetail({ userId, onClose }: { userId: string; onClose: () => void }) {
-  const [data, setData] = useState<{ user: User; transactions: Transaction[]; goals: Goal[] } | null>(null);
+  const [data, setData] = useState<{ user: User; transactions: Transaction[]; goals: Goal[]; categories: Category[] } | null>(null);
   const [editingPlan, setEditingPlan] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'FREE' | 'BASIC' | 'PRO' | null>(null);
+  const [editingUser, setEditingUser] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<User['role']>('USER');
+  const [blocked, setBlocked] = useState(false);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
+  const [usageType, setUsageType] = useState<'pessoal' | 'empresarial' | 'organizar'>('pessoal');
+  const [companyName, setCompanyName] = useState('');
+  const [companyLogo, setCompanyLogo] = useState('');
+  const [businessPurpose, setBusinessPurpose] = useState('');
+  const [primaryColor, setPrimaryColor] = useState('');
+  const [categoriesInput, setCategoriesInput] = useState('');
+
+  const parseCategories = (value: string) => Array.from(new Set(value.split(/[\n,]+/).map((name) => name.trim()).filter(Boolean)));
 
   useEffect(() => {
     api.get(`/api/users/${userId}`).then((r) => {
       setData(r.data);
       setSelectedPlan(r.data.user.plan || 'FREE');
-    });
+      setSelectedRole(r.data.user.role);
+      setBlocked(r.data.user.blocked);
+      setHasCompletedOnboarding(!!r.data.user.hasCompletedOnboarding);
+      setUsageType(r.data.user.usageType || 'pessoal');
+      setCompanyName(r.data.user.companyName || '');
+      setCompanyLogo(r.data.user.companyLogo || '');
+      setBusinessPurpose(r.data.user.businessPurpose || '');
+      setPrimaryColor(r.data.user.primaryColor || '');
+      setCategoriesInput((r.data.categories || []).map((c: Category) => c.name).join('\n'));
+    }).catch((e) => toast.error(apiErrorMessage(e)));
   }, [userId]);
 
   const savePlan = async () => {
@@ -191,6 +233,30 @@ function UserDetail({ userId, onClose }: { userId: string; onClose: () => void }
       toast.success('Plano alterado com sucesso');
       setData({ ...data, user: { ...data.user, plan: selectedPlan } });
       setEditingPlan(false);
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    }
+  };
+
+  const saveUserSettings = async () => {
+    if (!data) return;
+    try {
+      await api.put(`/api/users/${userId}`, {
+        role: selectedRole,
+        blocked,
+        hasCompletedOnboarding,
+        usageType,
+        companyName: companyName || null,
+        companyLogo: companyLogo || null,
+        businessPurpose: businessPurpose || null,
+        primaryColor: primaryColor || null,
+        categories: parseCategories(categoriesInput),
+      });
+      toast.success('Configurações salvas com sucesso');
+      setEditingUser(false);
+      const r = await api.get(`/api/users/${userId}`);
+      setData(r.data);
+      setSelectedPlan(r.data.user.plan || 'FREE');
     } catch (e) {
       toast.error(apiErrorMessage(e));
     }
@@ -301,6 +367,130 @@ function UserDetail({ userId, onClose }: { userId: string; onClose: () => void }
                     <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
                       {planDescriptions[data.user.plan as 'FREE' | 'BASIC' | 'PRO' || 'FREE']}
                     </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 card !p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Shield className="w-5 h-5 text-slate-700" />
+                  <h3 className="font-semibold text-lg">Configurações da conta</h3>
+                </div>
+                {!editingUser ? (
+                  <button onClick={() => setEditingUser(true)} className="btn-primary !py-1.5 !px-3 !text-sm">
+                    Editar conta
+                  </button>
+                ) : null}
+              </div>
+
+              {editingUser ? (
+                <div className="space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="label">Nome</label>
+                      <input value={data.user.name} readOnly className="input w-full" />
+                    </div>
+                    <div>
+                      <label className="label">Papel</label>
+                      <select value={selectedRole} onChange={(e) => setSelectedRole(e.target.value as User['role'])} className="input w-full">
+                        <option value="USER">USER</option>
+                        <option value="ADMIN">ADMIN</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="label">Bloqueado</label>
+                      <select value={blocked ? 'yes' : 'no'} onChange={(e) => setBlocked(e.target.value === 'yes')} className="input w-full">
+                        <option value="no">Não</option>
+                        <option value="yes">Sim</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Onboarding completo</label>
+                      <select value={hasCompletedOnboarding ? 'yes' : 'no'} onChange={(e) => setHasCompletedOnboarding(e.target.value === 'yes')} className="input w-full">
+                        <option value="yes">Sim</option>
+                        <option value="no">Não</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="label">Uso</label>
+                      <select value={usageType} onChange={(e) => setUsageType(e.target.value as 'pessoal' | 'empresarial' | 'organizar')} className="input w-full">
+                        <option value="pessoal">Pessoal</option>
+                        <option value="empresarial">Empresarial</option>
+                        <option value="organizar">Organizar</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label">Cor principal</label>
+                      <input value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} placeholder="#7C3AED" className="input w-full" />
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="label">Nome da empresa</label>
+                      <input value={companyName} onChange={(e) => setCompanyName(e.target.value)} className="input w-full" />
+                    </div>
+                    <div>
+                      <label className="label">Logo da empresa (URL)</label>
+                      <input value={companyLogo} onChange={(e) => setCompanyLogo(e.target.value)} className="input w-full" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="label">Finalidade</label>
+                    <textarea value={businessPurpose} onChange={(e) => setBusinessPurpose(e.target.value)} className="input w-full min-h-[90px]" />
+                  </div>
+
+                  <div>
+                    <label className="label">Categorias</label>
+                    <textarea value={categoriesInput} onChange={(e) => setCategoriesInput(e.target.value)} className="input w-full min-h-[90px]" placeholder="Digite uma categoria por linha ou separadas por vírgula" />
+                    <p className="text-xs text-slate-500 mt-1">As categorias serão atualizadas para este usuário.</p>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button onClick={saveUserSettings} className="btn-primary flex-1">Salvar conta</button>
+                    <button onClick={() => setEditingUser(false)} className="btn-ghost flex-1">Cancelar</button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+                      <div className="text-xs text-slate-500 uppercase tracking-wide">Papel</div>
+                      <div className="mt-2 font-semibold">{data.user.role}</div>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+                      <div className="text-xs text-slate-500 uppercase tracking-wide">Onboarding</div>
+                      <div className="mt-2 font-semibold">{data.user.hasCompletedOnboarding ? 'Concluído' : 'Pendente'}</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+                      <div className="text-xs text-slate-500 uppercase tracking-wide">Uso</div>
+                      <div className="mt-2 font-semibold">{data.user.usageType || 'pessoal'}</div>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+                      <div className="text-xs text-slate-500 uppercase tracking-wide">Empresa</div>
+                      <div className="mt-2 font-semibold">{data.user.companyName || 'Nenhuma'}</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+                      <div className="text-xs text-slate-500 uppercase tracking-wide">Categoria principal</div>
+                      <div className="mt-2 font-semibold">{data.categories.slice(0, 3).map((c) => c.name).join(', ') || 'Sem categorias'}</div>
+                    </div>
+                    <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
+                      <div className="text-xs text-slate-500 uppercase tracking-wide">Cor</div>
+                      <div className="mt-2 font-semibold">{data.user.primaryColor || 'Padrão'}</div>
+                    </div>
                   </div>
                 </div>
               )}

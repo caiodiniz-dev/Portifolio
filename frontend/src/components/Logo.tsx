@@ -1,17 +1,14 @@
 import React from 'react';
 
-interface Props { size?: number; showText?: boolean; className?: string }
+interface Props { size?: number; showText?: boolean; className?: string; src?: string; altText?: string }
 
-export const Logo: React.FC<Props> = ({ size = 36, showText = true, className = '' }) => (
+export const Logo: React.FC<Props> = ({ size = 36, showText = true, className = '', src, altText }) => (
   <div className={`flex items-center gap-2.5 ${className}`} data-testid="finix-logo">
     <div
       className="relative rounded-xl overflow-hidden shrink-0"
-      style={{
-        width: size, height: size,
-        boxShadow: '0 6px 20px -6px rgba(37, 99, 235, 0.55)',
-      }}
+      style={{ width: size, height: size }}
     >
-      <img src="/logo.png" alt="Finix logo" className="w-full h-full object-cover" />
+      <img src={src || "/logo.png"} alt={altText || "Finix logo"} className="w-full h-full object-cover" />
     </div>
     {showText && (
       <div className="flex flex-col leading-none">

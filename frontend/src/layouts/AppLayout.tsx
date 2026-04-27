@@ -5,10 +5,11 @@ import {
   LayoutDashboard, ArrowLeftRight, Target, Shield, LogOut, Menu, X, Download, Sun, Moon, Wallet, User as UserIcon, Crown
 } from 'lucide-react';
 import { Logo } from '../components/Logo';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth, useAutoRefreshUser } from '../contexts/AuthContext';
 
 export default function AppLayout() {
   const { user, logout } = useAuth();
+  useAutoRefreshUser(30000);
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState<boolean>(() => localStorage.getItem('finix_theme') === 'dark');
@@ -17,6 +18,18 @@ export default function AppLayout() {
     document.documentElement.classList.toggle('dark', dark);
     localStorage.setItem('finix_theme', dark ? 'dark' : 'light');
   }, [dark]);
+
+  React.useEffect(() => {
+    if (user.plan === 'PRO' && user.primaryColor) {
+      document.documentElement.style.setProperty('--brand-primary', user.primaryColor);
+    }
+  }, [user.primaryColor, user.plan]);
+
+  React.useEffect(() => {
+    if (user && user.role !== 'ADMIN' && user.plan === 'PRO' && !user.hasCompletedOnboarding) {
+      nav('/onboarding', { replace: true });
+    }
+  }, [user?.plan, user?.hasCompletedOnboarding, user?.role, nav]);
 
   if (!user) return null;
 
@@ -34,8 +47,23 @@ export default function AppLayout() {
 
   const Sidebar = (
     <aside className="w-64 shrink-0 h-full bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 flex flex-col">
-      <div className="px-5 py-5 border-b border-slate-100 dark:border-slate-800">
-        <Logo />
+      <div className="px-5 py-6 border-b border-slate-100 dark:border-slate-800">
+        <div className="flex items-center gap-4">
+          <Logo
+            src={user.plan === 'PRO' ? user.companyLogo : undefined}
+            altText={user.plan === 'PRO' ? (user.companyName || "Logo") : undefined}
+            showText={user.plan !== 'PRO'}
+            size={52}
+          />
+          {user.plan === 'PRO' && user.companyName && (
+            <div>
+              <div className="text-base font-semibold text-slate-500 dark:text-slate-300">Empresa</div>
+              <div className="text-xl font-display font-bold text-slate-900 dark:text-white tracking-tight">
+                {user.companyName}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       <nav className="flex-1 p-3 space-y-1">
         {links.map((l) => (
@@ -71,11 +99,10 @@ export default function AppLayout() {
               <div className="mt-1">
                 <span
                   data-testid="plan-badge"
-                  className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${
-                    user.plan === 'PRO' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' :
+                  className={`inline-flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${user.plan === 'PRO' ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' :
                     user.plan === 'BASIC' ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white' :
-                    'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                  }`}
+                      'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
+                    }`}
                 >
                   <Crown className="w-2.5 h-2.5" /> {user.plan}
                 </span>

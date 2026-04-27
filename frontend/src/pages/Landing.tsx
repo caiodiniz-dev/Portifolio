@@ -325,7 +325,7 @@ export default function Landing() {
           <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-center mb-12">
             <div className="chip bg-brand-blue/10 text-brand-blue mb-3 mx-auto border border-brand-blue/20">Preço</div>
             <h2 className="text-3xl sm:text-5xl font-display font-extrabold tracking-tight">Grátis durante o lançamento</h2>
-            <p className="mt-3 text-slate-600 text-lg">Todos os recursos sem limite. Para sempre na versão beta.</p>
+            <p className="mt-3 text-slate-600 text-lg">Teste o Finix sem compromisso. O plano Pro traz personalização para sua empresa e recursos premium.</p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto items-center">
@@ -369,8 +369,9 @@ export default function Landing() {
               <h3 className="text-2xl font-display font-bold text-center">Plano Pro</h3>
               <div className="text-5xl font-display font-extrabold text-center mt-4">R$ 35</div>
               <div className="text-slate-600 text-sm text-center mt-2">/mês</div>
+              <div className="text-center text-sm text-brand-blue font-semibold mt-3">Personalize para sua empresa</div>
               <ul className="mt-8 space-y-3 text-left">
-                {['Transações ilimitadas', 'Dashboard completo', 'Análise com IA avançada', 'Exportação PDF + Excel', 'Metas ilimitadas', 'Suporte prioritário'].map(f => (
+                {['Transações ilimitadas', 'Dashboard completo', 'Análise com IA detalhada', 'Personalização completa da marca', 'Exportação PDF + Excel', 'Suporte prioritário'].map(f => (
                   <li key={f} className="flex items-center gap-2 text-sm font-medium">
                     <CheckCircle2 className="w-4 h-4 text-brand-blue" />
                     {f}
@@ -420,98 +421,29 @@ export default function Landing() {
       </section>
 
       {/* Big CTA */}
-      <section className="py-24 bg-gradient-to-b from-white to-slate-50">
-        <div className="max-w-6xl mx-auto px-6">
+      <section className="py-16 bg-slate-50 border-t border-slate-100">
+        <div className="max-w-7xl mx-auto px-6">
           <motion.div
-            initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="relative rounded-3xl overflow-hidden p-8 sm:p-16 text-white grid md:grid-cols-2 gap-12 items-center"
-            style={{ background: 'linear-gradient(135deg, #2563EB 0%, #7C3AED 50%, #22C55E 120%)' }}
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm"
           >
-            {/* Left: Text */}
-            <motion.div initial={{ opacity: 0, x: -30 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}>
-              <h2 className="text-4xl sm:text-5xl font-display font-extrabold leading-tight">
-                Pare de perder dinheiro sem perceber.
-              </h2>
-              <p className="mt-6 text-white/90 text-lg leading-relaxed">
-                Transforme seus gastos em resultados reais hoje mesmo — comece em menos de 1 minuto.
-              </p>
-              <Link to="/register" className="mt-8 inline-flex items-center gap-2 px-7 py-4 rounded-xl font-bold bg-white text-brand-dark hover:bg-slate-100 hover:scale-105 transition text-base shadow-lg" data-testid="cta-register">
-                Começar grátis <ArrowRight className="w-5 h-5" />
-              </Link>
-              <div className="mt-4 text-sm text-white/70 flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" /> Sem cartão de crédito necessário
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+              <div>
+                <div className="text-xs uppercase tracking-[0.35em] text-brand-blue font-semibold mb-2">Suporte</div>
+                <h2 className="text-2xl sm:text-3xl font-display font-bold text-slate-900">Precisa de ajuda? Estamos disponíveis.</h2>
+                <p className="mt-3 text-slate-600 max-w-2xl">
+                  Converse com a nossa equipe por WhatsApp ou envie um e-mail. Estamos prontos para te ajudar a configurar o Finix e resolver qualquer dúvida.
+                </p>
               </div>
-            </motion.div>
-
-            {/* Right: Chart with green arrow */}
-            <motion.div
-              initial={{ opacity: 0, x: 30, scale: 0.9 }}
-              whileInView={{ opacity: 1, x: 0, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="relative"
-            >
-              <svg viewBox="0 0 200 200" className="w-full h-auto max-w-xs">
-                {/* Grid background */}
-                <g stroke="rgba(255,255,255,0.1)" strokeWidth="1">
-                  <line x1="0" y1="40" x2="200" y2="40" />
-                  <line x1="0" y1="80" x2="200" y2="80" />
-                  <line x1="0" y1="120" x2="200" y2="120" />
-                  <line x1="0" y1="160" x2="200" y2="160" />
-                  <line x1="40" y1="0" x2="40" y2="200" />
-                  <line x1="80" y1="0" x2="80" y2="200" />
-                  <line x1="120" y1="0" x2="120" y2="200" />
-                  <line x1="160" y1="0" x2="160" y2="200" />
-                </g>
-
-                {/* Chart area */}
-                <polyline
-                  points="20,160 60,120 100,100 140,60 180,20"
-                  fill="none"
-                  stroke="#22C55E"
-                  strokeWidth="3"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-
-                {/* Area under curve */}
-                <polygon
-                  points="20,160 60,120 100,100 140,60 180,20 180,200 20,200"
-                  fill="rgba(34, 197, 94, 0.2)"
-                />
-
-                {/* Data points */}
-                {[
-                  { cx: 20, cy: 160 },
-                  { cx: 60, cy: 120 },
-                  { cx: 100, cy: 100 },
-                  { cx: 140, cy: 60 },
-                  { cx: 180, cy: 20 },
-                ].map((point, i) => (
-                  <circle
-                    key={i}
-                    cx={point.cx}
-                    cy={point.cy}
-                    r="4"
-                    fill="#22C55E"
-                  />
-                ))}
-
-                {/* Arrow at top */}
-                <g>
-                  <line x1="190" y1="25" x2="190" y2="0" stroke="#22C55E" strokeWidth="3" strokeLinecap="round" />
-                  <polyline points="185,10 190,0 195,10" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </g>
-              </svg>
-
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 3, repeat: Infinity }}
-                className="absolute -top-6 -right-6 bg-white/95 backdrop-blur rounded-xl p-3 shadow-xl text-brand-dark text-xs font-bold"
-              >
-                +18% este mês ↑
-              </motion.div>
-            </motion.div>
+              <div className="flex flex-wrap items-center gap-3">
+                <a href="https://wa.me/5519994737425?text=Olá%20Finix" target="_blank" rel="noreferrer" className="btn-primary">
+                  WhatsApp
+                </a>
+                <a href="mailto:cvdinizramos@gmail.com" className="btn-outline text-brand-blue">
+                  Enviar e-mail
+                </a>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>

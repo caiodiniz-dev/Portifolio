@@ -9,7 +9,21 @@ import * as yup from 'yup';
 import toast from 'react-hot-toast';
 import { api, apiErrorMessage } from '../services/api';
 import { Budget, Transaction } from '../types';
-import { currency, dateBR, CATEGORIES, dateISOForInput } from '../utils/format';
+import { currency, dateBR, dateISOForInput } from '../utils/format';
+import { useAuth } from '../contexts/AuthContext';
+
+const DEFAULT_CATEGORIES = [
+  'Alimentação',
+  'Transporte',
+  'Saúde',
+  'Salário',
+  'Investimento',
+  'Pagamento',
+  'Lazer',
+  'Educação',
+  'Moradia',
+  'Serviços',
+];
 
 const schema = yup.object({
   title: yup.string().min(1).required('Título obrigatório'),
@@ -27,27 +41,60 @@ const schema = yup.object({
 type Form = yup.InferType<typeof schema>;
 
 export default function Transactions() {
-  const [items, setItems] = useState<Transaction[] | null>(null);
+  const [items, setItems] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [q, setQ] = useState('');
   const [type, setType] = useState<'' | 'INCOME' | 'EXPENSE'>('');
   const [category, setCategory] = useState('');
+  const { user } = useAuth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [userCategories, setUserCategories] = useState<string[]>(DEFAULT_CATEGORIES);
+
+  const effectiveCategories = user?.plan === 'PRO' ? userCategories : DEFAULT_CATEGORIES;
 
   const fetchBudgets = async () => setBudgets((await api.get('/api/budgets')).data);
 
+  const fetchCategories = async () => {
+    if (!user || user.plan !== 'PRO') {
+      setUserCategories(DEFAULT_CATEGORIES);
+      return;
+    }
+
+    try {
+      const r = await api.get('/api/categories');
+      if (r.data.length > 0) {
+        setUserCategories(r.data.map((c: any) => c.name));
+      } else {
+        setUserCategories(DEFAULT_CATEGORIES);
+      }
+    } catch (e) {
+      console.log('Erro ao buscar categorias:', e);
+      setUserCategories(DEFAULT_CATEGORIES);
+    }
+  };
+
   const fetchData = useCallback(async () => {
-    const params: any = {};
-    if (q) params.search = q;
-    if (type) params.type = type;
-    if (category) params.category = category;
-    const r = await api.get('/api/transactions', { params });
-    setItems(r.data);
+    setLoading(true);
+    try {
+      const params: any = {};
+      if (q) params.search = q;
+      if (type) params.type = type;
+      if (category) params.category = category;
+      const r = await api.get('/api/transactions', { params });
+      setItems(r.data);
+    } catch (e) {
+      toast.error('Erro ao carregar transações');
+      console.error('Erro ao carregar transações:', e);
+    } finally {
+      setLoading(false);
+    }
   }, [q, type, category]);
 
   useEffect(() => { fetchData().catch(() => toast.error('Erro ao carregar')); }, [fetchData]);
   useEffect(() => { fetchBudgets().catch(() => toast.error('Erro ao carregar orçamentos')); }, []);
+  useEffect(() => { fetchCategories(); }, [user]);
   const openNew = () => { setEditing(null); setOpen(true); };
   const openEdit = (t: Transaction) => { setEditing(t); setOpen(true); };
 
@@ -86,14 +133,13 @@ export default function Transactions() {
           </select>
           <select value={category} onChange={(e) => setCategory(e.target.value)} className="input" data-testid="filter-category">
             <option value="">Todas as categorias</option>
-            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            {effectiveCategories.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
       </div>
-
       {/* List */}
       <div className="card !p-0 overflow-hidden">
-        {items === null ? (
+        {loading ? (
           <div className="p-8"><div className="skeleton h-16" /></div>
         ) : items.length === 0 ? (
           <div className="p-12 text-center">
@@ -160,6 +206,7 @@ export default function Transactions() {
             key={editing?.id || 'new'}
             editing={editing}
             budgets={budgets}
+            categories={effectiveCategories}
             onClose={() => setOpen(false)}
             onSaved={() => { setOpen(false); fetchData(); fetchBudgets(); }}
           />
@@ -169,7 +216,10 @@ export default function Transactions() {
   );
 }
 
-function TxModal({ editing, onClose, onSaved, budgets }: { editing: Transaction | null; budgets: Budget[]; onClose: () => void; onSaved: () => void }) {
+function TxModal({ editing, onClose, onSaved, budgets, categories }: { editing: Transaction | null; budgets: Budget[]; categories: string[]; onClose: () => void; onSaved: () => void }) {
+  const categoryOptions = categories.length ? categories : DEFAULT_CATEGORIES;
+  const transactionCategories = Array.from(new Set([...(categoryOptions || []), ...(editing ? [editing.category] : [])]));
+  const defaultCategory = editing ? editing.category : (transactionCategories[0] || DEFAULT_CATEGORIES[0]);
   const { register, handleSubmit, watch, formState: { errors, isSubmitting } } = useForm<Form>({
     resolver: yupResolver(schema) as any,
     defaultValues: editing
@@ -186,7 +236,7 @@ function TxModal({ editing, onClose, onSaved, budgets }: { editing: Transaction 
         installments: editing.installments || 1,
         currency: editing.currency || 'BRL',
       }
-      : { type: 'EXPENSE', category: 'Alimentação', date: dateISOForInput(), description: '', recurring: false, recurringFrequency: null, paymentMethod: 'pix', installments: 1, currency: 'BRL' } as any,
+      : { type: 'EXPENSE', category: defaultCategory, date: dateISOForInput(), description: '', recurring: false, recurringFrequency: null, paymentMethod: 'pix', installments: 1, currency: 'BRL' } as any,
   });
 
   const recurring = (editing?.recurring) ?? false;
@@ -234,12 +284,12 @@ function TxModal({ editing, onClose, onSaved, budgets }: { editing: Transaction 
     <motion.div
       initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4"
-      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
     >
       <motion.div
         initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }}
         className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-lg p-6"
-        onClick={(e) => e.stopPropagation()}
         data-testid="tx-modal"
       >
         <div className="flex items-center justify-between">
@@ -274,8 +324,12 @@ function TxModal({ editing, onClose, onSaved, budgets }: { editing: Transaction 
             </div>
             <div>
               <label className="text-sm font-medium">Categoria</label>
-              <select {...register('category')} className="input mt-1" data-testid="tx-category">
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              <select {...register('category')} className="input mt-1" data-testid="tx-category" disabled={transactionCategories.length === 0}>
+                {transactionCategories.length === 0 ? (
+                  <option value="">Configure categorias no onboarding</option>
+                ) : (
+                  transactionCategories.map((c) => <option key={c} value={c}>{c}</option>)
+                )}
               </select>
               {selectedBudget && (
                 <p className="text-xs mt-2 text-slate-500">
@@ -353,7 +407,7 @@ function TxModal({ editing, onClose, onSaved, budgets }: { editing: Transaction 
           )}
           <div className="flex justify-end gap-2 pt-2">
             <button type="button" onClick={onClose} className="btn-outline">Cancelar</button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting} data-testid="tx-save">
+            <button type="submit" className="btn-primary" disabled={isSubmitting || transactionCategories.length === 0} data-testid="tx-save">
               {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
             </button>
           </div>

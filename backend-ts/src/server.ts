@@ -20,11 +20,18 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'finix-dev-secret';
 const JWT_EXPIRES_IN = '7d';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+
+const corsOrigins = [
+  FRONTEND_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'http://localhost:3002'
+];
+
 app.use(cors({
-  origin: [
-    "https://finixxapp.vercel.app",
-    "http://localhost:5173"
-  ],
+  origin: corsOrigins,
   methods: ["GET", "POST", "PUT", "DELETE"],
   credentials: true
 }));
@@ -176,11 +183,31 @@ const profileUpdateSchema = z.object({
   photo: z.string().optional(),
 });
 
+const categoriesUpdateSchema = z.object({
+  categories: z.array(z.string().min(1).max(50)).min(1),
+});
+
 const userUpdateSchema = z.object({
   name: z.string().optional(),
   role: z.enum(['USER', 'ADMIN']).optional(),
   blocked: z.boolean().optional(),
   plan: z.enum(['FREE', 'BASIC', 'PRO']).optional(),
+  hasCompletedOnboarding: z.boolean().optional(),
+  usageType: z.enum(['pessoal', 'empresarial', 'organizar']).optional(),
+  companyName: z.string().optional().nullable(),
+  companyLogo: z.string().optional().nullable(),
+  businessPurpose: z.string().optional().nullable(),
+  primaryColor: z.string().optional().nullable(),
+  categories: z.array(z.string().min(1).max(50)).optional(),
+});
+
+const onboardingSchema = z.object({
+  usageType: z.enum(['pessoal', 'empresarial', 'organizar']),
+  companyName: z.string().optional(),
+  companyLogo: z.string().optional(),
+  businessPurpose: z.string().optional(),
+  primaryColor: z.string().optional(),
+  categories: z.array(z.string().min(1).max(50)).min(1),
 });
 
 // ============================================================================
@@ -190,7 +217,9 @@ const userPublic = (u: any) => ({
   id: u.id, name: u.name, email: u.email, role: u.role, blocked: u.blocked,
   photo: u.photo, plan: u.plan, transactionsUsed: u.transactionsUsed,
   stripeCustomerId: u.stripeCustomerId, stripeSubscriptionId: u.stripeSubscriptionId,
-  planExpiresAt: u.planExpiresAt, createdAt: u.createdAt,
+  planExpiresAt: u.planExpiresAt, hasCompletedOnboarding: u.hasCompletedOnboarding,
+  usageType: u.usageType, companyName: u.companyName, companyLogo: u.companyLogo,
+  businessPurpose: u.businessPurpose, primaryColor: u.primaryColor, createdAt: u.createdAt,
 });
 
 // ============================================================================
@@ -249,8 +278,63 @@ app.get('/api/auth/me', authenticate, (req, res) => {
 });
 
 // ============================================================================
-// PLANS
+// ONBOARDING
 // ============================================================================
+app.post('/api/onboarding', authenticate, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    if (user.plan !== 'PRO') {
+      return res.status(403).json({ error: 'Onboarding disponível apenas para plano PRO' });
+    }
+    if (user.hasCompletedOnboarding) {
+      return res.status(400).json({ error: 'Onboarding já completado' });
+    }
+    const data = onboardingSchema.parse(req.body);
+    const updateData: any = {
+      hasCompletedOnboarding: true,
+      usageType: data.usageType,
+    };
+    if (data.usageType !== 'pessoal') {
+      updateData.companyName = data.companyName;
+      updateData.companyLogo = data.companyLogo;
+      updateData.businessPurpose = data.businessPurpose;
+      updateData.primaryColor = data.primaryColor;
+    }
+    const updatedUser = await prisma.user.update({
+      where: { id: user.id },
+      data: updateData,
+    });
+    // Salvar categorias personalizadas
+    await prisma.category.createMany({
+      data: data.categories.map(name => ({ userId: user.id, name })),
+    });
+    res.json({ user: userPublic(updatedUser) });
+  } catch (err: any) {
+    console.error('Onboarding error:', err);
+    if (err.name === 'ZodError') {
+      return res.status(400).json({ error: 'Dados inválidos' });
+    }
+    res.status(500).json({ error: err.message || 'Erro no onboarding' });
+  }
+});
+
+app.post('/api/upload-logo', authenticate, upload.single('logo'), async (req, res) => {
+  try {
+    const user = (req as any).user;
+    if (user.plan !== 'PRO') {
+      return res.status(403).json({ error: 'Upload de logo disponível apenas para plano PRO' });
+    }
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+    }
+    // Simular upload - em produção, salvar no cloud storage
+    const logoUrl = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
+    res.json({ logoUrl });
+  } catch (err: any) {
+    console.error('Upload error:', err);
+    res.status(500).json({ error: 'Erro no upload' });
+  }
+});
 app.get('/api/plans', (req, res) => {
   res.json(Object.values(PLANS));
 });
@@ -268,9 +352,47 @@ app.get('/api/plans/me', authenticate, (req, res) => {
   });
 });
 
-// ============================================================================
-// TRANSACTIONS (with plan gate)
-// ============================================================================
+app.put('/api/categories', authenticate, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const plan = PLANS[user.plan] || PLANS.FREE;
+    if (plan.categoriesLimit === 3) {
+      return res.status(403).json({ error: 'Atualização de categorias disponível apenas para planos avançados' });
+    }
+    const data = categoriesUpdateSchema.parse(req.body);
+    const uniqueCategories = Array.from(new Set(data.categories.map((cat) => cat.trim()).filter(Boolean)));
+    if (uniqueCategories.length === 0) {
+      return res.status(400).json({ error: 'Adicione pelo menos uma categoria' });
+    }
+    if (plan.categoriesLimit !== 999 && uniqueCategories.length > plan.categoriesLimit) {
+      return res.status(400).json({ error: `Plano ${plan.name} permite até ${plan.categoriesLimit} categorias.` });
+    }
+    await prisma.category.deleteMany({ where: { userId: user.id } });
+    await prisma.category.createMany({ data: uniqueCategories.map((name) => ({ userId: user.id, name })) });
+    const categories = await prisma.category.findMany({ where: { userId: user.id }, orderBy: { name: 'asc' } });
+    res.json(categories);
+  } catch (err: any) {
+    console.error('Categories update error:', err);
+    if (err.name === 'ZodError') {
+      return res.status(400).json({ error: 'Dados de categoria inválidos' });
+    }
+    res.status(500).json({ error: err.message || 'Erro ao atualizar categorias' });
+  }
+});
+
+app.get('/api/categories', authenticate, async (req, res) => {
+  try {
+    const user = (req as any).user;
+    const categories = await prisma.category.findMany({
+      where: { userId: user.id },
+      orderBy: { name: 'asc' },
+    });
+    res.json(categories);
+  } catch (err: any) {
+    console.error('Categories error:', err);
+    res.status(500).json({ error: 'Erro ao buscar categorias' });
+  }
+});
 app.get('/api/transactions', authenticate, async (req, res) => {
   const user = (req as any).user;
   const { type, category, search, startDate, endDate } = req.query;
@@ -563,13 +685,24 @@ app.get('/api/users/:id', authenticate, requireAdmin, async (req, res) => {
   if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
   const transactions = await prisma.transaction.findMany({ where: { userId } });
   const goals = await prisma.goal.findMany({ where: { userId } });
-  res.json({ user: userPublic(user), transactions, goals });
+  const categories = await prisma.category.findMany({ where: { userId }, orderBy: { name: 'asc' } });
+  res.json({ user: userPublic(user), transactions, goals, categories });
 });
 
 app.put('/api/users/:id', authenticate, requireAdmin, async (req, res) => {
   const data = userUpdateSchema.parse(req.body);
   const userId = String(req.params.id);
-  const updated = await prisma.user.update({ where: { id: userId }, data });
+  const { categories, ...updateData } = data;
+  const updated = await prisma.user.update({ where: { id: userId }, data: updateData });
+
+  if (categories) {
+    const uniqueCategories = Array.from(new Set(categories.map((name) => name.trim()).filter(Boolean)));
+    await prisma.category.deleteMany({ where: { userId } });
+    if (uniqueCategories.length) {
+      await prisma.category.createMany({ data: uniqueCategories.map((name) => ({ userId, name })) });
+    }
+  }
+
   res.json(userPublic(updated));
 });
 

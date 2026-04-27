@@ -111,18 +111,38 @@ export default function Dashboard() {
     { label: 'Economizado', value: data.saved, icon: PiggyBank, color: 'from-amber-500 to-orange-500', positive: true },
   ];
 
+  const shadeHexColor = (hex: string, amount: number) => {
+    const normalized = hex.replace('#', '');
+    const num = parseInt(normalized, 16);
+    const r = Math.min(255, Math.max(0, (num >> 16) + amount));
+    const g = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amount));
+    const b = Math.min(255, Math.max(0, (num & 0x0000FF) + amount));
+    return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+  };
+
   return (
     <div className="space-y-6" data-testid="dashboard">
-      {/* Container com borda para modo claro */}
       <div className="bg-white dark:bg-transparent rounded-2xl border border-slate-200 dark:border-transparent shadow-sm dark:shadow-none p-6">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-display font-extrabold tracking-tight">Olá, {user?.name}! 👋</h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-1">Acompanhe seu progresso financeiro</p>
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-4">
+            {user.plan === 'PRO' && user.companyName ? (
+              <div className="inline-flex items-center gap-4 rounded-[2rem] border border-brand-blue/10 bg-brand-blue/5 px-5 py-4 shadow-sm">
+                <img src={user.companyLogo || '/logo.png'} alt={user.companyName} className="w-16 h-16 rounded-3xl object-cover border border-white shadow-sm" />
+                <div>
+                  <div className="text-xs uppercase tracking-[0.35em] text-brand-blue font-semibold">Área da empresa</div>
+                  <div className="text-4xl font-display font-bold text-slate-900 dark:text-white leading-tight">{user.companyName}</div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <h1 className="text-3xl font-display font-extrabold tracking-tight">Olá, {user?.name}!</h1>
+              </div>
+            )}
+            <p className="text-slate-500 dark:text-slate-400">Acompanhe seu progresso financeiro com análises atualizadas e visão clara por categoria.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 justify-start lg:justify-end">
             <button onClick={generateAi} disabled={aiLoading} className="btn-primary" data-testid="ai-insights-btn">
-              {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Sparkles className="w-4 h-4" /> Análise com IA</>}
+              {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Sparkles className="w-4 h-4" /> {user.plan === 'PRO' ? 'Análise IA PRO' : 'Análise com IA'}</>}
             </button>
             <button onClick={() => handleExport('pdf')} className="btn-outline" data-testid="export-pdf">
               <FileDown className="w-4 h-4" /> PDF
@@ -286,7 +306,7 @@ export default function Dashboard() {
                       cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={3}
                     >
                       {data.categories.map((c, i) => (
-                        <Cell key={i} fill={CATEGORY_COLORS[c.category] || '#64748B'} />
+                        <Cell key={i} fill={user.primaryColor ? shadeHexColor(user.primaryColor, i * 10) : (CATEGORY_COLORS[c.category] || '#64748B')} />
                       ))}
                     </Pie>
                     <Tooltip formatter={(v: any) => currency(Number(v))} />

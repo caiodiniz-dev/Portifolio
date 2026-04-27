@@ -11,26 +11,33 @@ datasource db {
 }
 
 model User {
-  id                   String   @id @default(uuid())
-  name                 String
-  email                String   @unique
-  passwordHash         String
-  role                 String   @default("USER")
-  blocked              Boolean  @default(false)
-  photo                String?
-  plan                 String   @default("FREE") // FREE | BASIC | PRO
-  stripeCustomerId     String?
-  stripeSubscriptionId String?
-  transactionsUsed     Int      @default(0)
-  transactionsMonth    String   @default("") // YYYY-MM for monthly reset
-  planExpiresAt        DateTime?
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @default(now()) @updatedAt
+  id                     String    @id @default(uuid())
+  name                   String
+  email                  String    @unique
+  passwordHash           String
+  role                   String    @default("USER")
+  blocked                Boolean   @default(false)
+  photo                  String?
+  plan                   String    @default("FREE") // FREE | BASIC | PRO
+  stripeCustomerId       String?
+  stripeSubscriptionId   String?
+  transactionsUsed       Int       @default(0)
+  transactionsMonth      String    @default("") // YYYY-MM for monthly reset
+  planExpiresAt          DateTime?
+  hasCompletedOnboarding Boolean   @default(false)
+  usageType              String?
+  companyName            String?
+  companyLogo            String?
+  businessPurpose        String?
+  primaryColor           String?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @default(now()) @updatedAt
 
-  transactions         Transaction[]
-  goals                Goal[]
-  budgets              Budget[]
-  paymentTransactions  PaymentTransaction[]
+  transactions        Transaction[]
+  goals               Goal[]
+  budgets             Budget[]
+  paymentTransactions PaymentTransaction[]
+  categories          Category[]
 
   @@map("users")
 }
@@ -93,15 +100,26 @@ model PaymentTransaction {
   sessionId       String   @unique
   amount          Float
   currency        String   @default("brl")
-  plan            String   // basic | pro
+  plan            String // basic | pro
   paymentStatus   String   @default("pending") // pending | paid | failed | expired
   status          String   @default("initiated")
   stripePaymentId String?
-  metadata        String?  // JSON string
+  metadata        String? // JSON string
   createdAt       DateTime @default(now())
   updatedAt       DateTime @default(now()) @updatedAt
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("payment_transactions")
+}
+
+model Category {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("categories")
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -21,6 +21,10 @@ export default function Profile() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [categoryInput, setCategoryInput] = useState('');
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [categoriesSaving, setCategoriesSaving] = useState(false);
 
   const nameForm = useForm<{ name: string }>({
     resolver: yupResolver(nameSchema) as any,
@@ -31,6 +35,10 @@ export default function Profile() {
   });
 
   if (!user) return null;
+
+  useEffect(() => {
+    fetchCategories();
+  }, [user]);
 
   const onSaveName = async (data: { name: string }) => {
     try {
@@ -70,6 +78,42 @@ export default function Profile() {
     const reader = new FileReader();
     reader.onload = (e) => setPreview(e.target?.result as string);
     reader.readAsDataURL(file);
+  };
+
+  const fetchCategories = async () => {
+    if (!user || user.plan === 'FREE') return;
+    setCategoriesLoading(true);
+    try {
+      const response = await api.get('/api/categories');
+      setCategories(response.data.map((category: any) => category.name));
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  const addCategory = () => {
+    const next = categoryInput.trim();
+    if (!next || categories.includes(next)) return;
+    setCategories((current) => [...current, next]);
+    setCategoryInput('');
+  };
+
+  const removeCategory = (index: number) => {
+    setCategories((current) => current.filter((_, i) => i !== index));
+  };
+
+  const onSaveCategories = async () => {
+    setCategoriesSaving(true);
+    try {
+      await api.put('/api/categories', { categories });
+      toast.success('Categorias atualizadas!');
+    } catch (e) {
+      toast.error(apiErrorMessage(e));
+    } finally {
+      setCategoriesSaving(false);
+    }
   };
 
   const onUploadPhoto = async () => {
@@ -186,6 +230,62 @@ export default function Profile() {
           </div>
         </motion.div>
       </div>
+
+      {user.plan !== 'FREE' && (
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }} className="card">
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 className="font-display font-bold text-lg">Categorias</h3>
+                <p className="text-sm text-slate-500">Ajuste as categorias que serão usadas nas transações.</p>
+              </div>
+              <button
+                type="button"
+                onClick={onSaveCategories}
+                className="btn-primary"
+                disabled={categoriesSaving || categoriesLoading}
+                data-testid="save-categories"
+              >
+                {categoriesSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar categorias'}
+              </button>
+            </div>
+
+            <div className="grid gap-3">
+              <div className="flex gap-2">
+                <input
+                  value={categoryInput}
+                  onChange={(e) => setCategoryInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addCategory())}
+                  className="input flex-1"
+                  placeholder="Nova categoria"
+                  data-testid="new-category"
+                />
+                <button type="button" onClick={addCategory} className="btn-outline" data-testid="add-category">Adicionar</button>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {categoriesLoading ? (
+                  <div className="text-sm text-slate-500">Carregando categorias...</div>
+                ) : categories.length === 0 ? (
+                  <div className="text-sm text-slate-500">Nenhuma categoria cadastrada ainda.</div>
+                ) : (
+                  categories.map((category, index) => (
+                    <button
+                      key={`${category}-${index}`}
+                      type="button"
+                      onClick={() => removeCategory(index)}
+                      className="chip bg-slate-100 text-slate-700 hover:bg-slate-200"
+                      data-testid={`category-chip-${index}`}
+                    >
+                      {category} <X className="w-3 h-3 inline-block ml-1" />
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="card">
         <h3 className="font-display font-bold text-lg flex items-center gap-2"><Lock className="w-5 h-5 text-brand-purple" /> Alterar senha</h3>

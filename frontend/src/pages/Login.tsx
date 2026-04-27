@@ -124,7 +124,13 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-100 text-xs text-slate-600">
+          <div className="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-100 text-sm text-slate-700">
+            <div className="font-semibold text-slate-900">Suporte Finix</div>
+            <p className="mt-2">Se precisar de ajuda antes de entrar, fale com a equipe pelo WhatsApp ou por e-mail.</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <a href="https://wa.me/5519994737425?text=Olá%20Finix" target="_blank" rel="noreferrer" className="btn-outline text-brand-blue">WhatsApp</a>
+              <a href="mailto:cvdinizramos@gmail.com" className="btn-outline text-brand-blue">E-mail</a>
+            </div>
           </div>
 
           <p className="mt-6 text-sm text-slate-600 text-center">
