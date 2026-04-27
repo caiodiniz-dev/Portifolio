@@ -24,7 +24,14 @@ const prisma = new client_1.PrismaClient();
 const upload = (0, multer_1.default)({ storage: multer_1.default.memoryStorage() });
 const JWT_SECRET = process.env.JWT_SECRET || 'finix-dev-secret';
 const JWT_EXPIRES_IN = '7d';
-app.use((0, cors_1.default)({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE'], credentials: true }));
+app.use((0, cors_1.default)({
+    origin: [
+        "https://finixxapp.vercel.app/",
+        "http://localhost:5173"
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+}));
 app.use(express_1.default.json({ limit: '10mb' }));
 // ============================================================================
 // PLANS CONFIGURATION

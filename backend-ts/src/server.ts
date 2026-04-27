@@ -22,7 +22,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'finix-dev-secret';
 const JWT_EXPIRES_IN = '7d';
 app.use(cors({
   origin: [
-    "https://finixxapp.vercel.app/",
+    "https://finixxapp.vercel.app",
     "http://localhost:5173"
   ],
   methods: ["GET", "POST", "PUT", "DELETE"],
