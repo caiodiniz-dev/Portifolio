@@ -20,9 +20,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'finix-dev-secret';
 const JWT_EXPIRES_IN = '7d';
-const CORS_ORIGINS = process.env.CORS_ORIGINS?.split(',') || ['*'];
-
-app.use(cors({ origin: CORS_ORIGINS, credentials: true }));
+app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE'], credentials: true }));
 app.use(express.json({ limit: '10mb' }));
 
 // ============================================================================
