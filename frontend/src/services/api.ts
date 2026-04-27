@@ -1,9 +1,13 @@
 import axios from 'axios';
 
+const API_URL = import.meta.env.VITE_API_URL || 'https://finix-versao-final-5.onrender.com';
+
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL,
+  baseURL: API_URL,
   headers: { 'Content-Type': 'application/json' },
 });
+
+console.log('[API] Using baseURL:', API_URL);
 
 api.interceptors.request.use((config: any) => {
   const token = localStorage.getItem('finix_token') || sessionStorage.getItem('finix_token');
