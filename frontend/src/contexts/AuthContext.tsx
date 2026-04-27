@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string, remember = true) => {
     try {
-      const { data } = await api.post('/auth/login', { email, password });
+      const { data } = await api.post('/api/auth/login', { email, password });
       const storage = remember ? localStorage : sessionStorage;
       storage.setItem('finix_token', data.token);
       setUser(data.user);
@@ -35,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const register = async (name: string, email: string, password: string) => {
     try {
-      const { data } = await api.post('/auth/register', { name, email, password });
+      const { data } = await api.post('/api/auth/register', { name, email, password });
       localStorage.setItem('finix_token', data.token);
       setUser(data.user);
     } catch (e) { throw new Error(apiErrorMessage(e)); }
