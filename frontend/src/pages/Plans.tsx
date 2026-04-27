@@ -57,6 +57,7 @@ const PLANS = [
 export default function Plans() {
   const { user } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
+  const API_BASE = import.meta.env.VITE_API_URL as string;
 
   const handleUpgrade = async (planId: string) => {
     if (planId === 'FREE' || planId === user?.plan) {
@@ -67,10 +68,10 @@ export default function Plans() {
     setLoading(planId);
     try {
       const response = await axios.post(
-        'http://localhost:8000/api/stripe/checkout',
+        `${API_BASE}/api/stripe/checkout`,
         { plan_id: planId },
         {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+          headers: { Authorization: `Bearer ${localStorage.getItem('finix_token')}` },
         }
       );
 

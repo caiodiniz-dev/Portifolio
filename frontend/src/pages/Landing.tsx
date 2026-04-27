@@ -47,6 +47,7 @@ export default function Landing() {
   const { user } = useAuth();
   const nav = useNavigate();
   const [loadingPlan, setLoadingPlan] = useState<string | null>(null);
+  const API_BASE = import.meta.env.VITE_API_URL as string;
 
   const handleCheckout = async (planId: 'BASIC' | 'PRO') => {
     if (!user) {
@@ -57,7 +58,7 @@ export default function Landing() {
 
     try {
       setLoadingPlan(planId);
-      const res = await fetch('http://localhost:8000/api/checkout/session', {
+      const res = await fetch(`${API_BASE}/api/checkout/session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
