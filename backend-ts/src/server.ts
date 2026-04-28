@@ -20,14 +20,10 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 const JWT_SECRET = process.env.JWT_SECRET || 'finix-dev-secret';
 const JWT_EXPIRES_IN = '7d';
-const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'https://finixxapp.vercel.app';
 
 const corsOrigins = [
-  FRONTEND_URL,
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://localhost:3001',
-  'http://localhost:3002'
+  FRONTEND_URL
 ];
 
 app.use(cors({
