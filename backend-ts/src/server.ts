@@ -688,7 +688,14 @@ app.get('/api/users/:id', authenticate, requireAdmin, async (req, res) => {
 app.put('/api/users/:id', authenticate, requireAdmin, async (req, res) => {
   const data = userUpdateSchema.parse(req.body);
   const userId = String(req.params.id);
+  const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+  if (!targetUser) return res.status(404).json({ error: 'Usuário não encontrado' });
+
   const { categories, ...updateData } = data;
+  if (data.plan === 'PRO' && targetUser.plan !== 'PRO' && data.hasCompletedOnboarding === undefined) {
+    updateData.hasCompletedOnboarding = false;
+  }
+
   const updated = await prisma.user.update({ where: { id: userId }, data: updateData });
 
   if (categories) {

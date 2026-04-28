@@ -229,7 +229,11 @@ function UserDetail({ userId, onClose }: { userId: string; onClose: () => void }
   const savePlan = async () => {
     if (!selectedPlan || !data) return;
     try {
-      await api.put(`/api/users/${userId}`, { plan: selectedPlan });
+      const payload: any = { plan: selectedPlan };
+      if (selectedPlan === 'PRO' && data.user.plan !== 'PRO') {
+        payload.hasCompletedOnboarding = false;
+      }
+      await api.put(`/api/users/${userId}`, payload);
       toast.success('Plano alterado com sucesso');
       setData({ ...data, user: { ...data.user, plan: selectedPlan } });
       setEditingPlan(false);
